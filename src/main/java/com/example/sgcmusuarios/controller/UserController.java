@@ -82,6 +82,7 @@ public class UserController {
 	public ResponseEntity<?> updateUser(@RequestBody UserRequest userRequest, @PathVariable Long id){
 		User user = userService.findById(id);
 		String username = new String(user.getUsername());
+		String password = new String(user.getPassword());
 		String username2 = new String(userRequest.getUsername());
 		if(username.intern() != username2.intern()) {
 			if(userRepository.existsByUsername(userRequest.getUsername())) {
@@ -92,6 +93,32 @@ public class UserController {
 		}
 		
 		//User user = userService.findById(id);
+		user.setUsername(userRequest.getUsername());
+		user.setPassword(password);
+		user.setEmail(userRequest.getEmail());
+		
+		Set<String> strRoles = userRequest.getRole();
+		Set<Role> roles = new HashSet<>();
+		
+		strRoles.forEach(role  -> {
+			Role userRoles = roleRepository.findByNombre(role)
+					.orElseThrow(() -> new RuntimeException("Error: Rol no registrado.."));
+			roles.add(userRoles);
+		});
+		
+		user.setRoles(roles);
+		userService.save(user);
+		
+		return ResponseEntity.ok(new MessageResponse("Usuario modificado con éxito!"));
+		
+	}
+	
+	
+	@PutMapping(value="/updatepassword/{id}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> updatePasswordUser(@RequestBody UserRequest userRequest, @PathVariable Long id){
+		User user = userService.findById(id);
+		
 		user.setUsername(userRequest.getUsername());
 		user.setPassword(encoder.encode(userRequest.getPassword()));
 		user.setEmail(userRequest.getEmail());
@@ -108,7 +135,7 @@ public class UserController {
 		user.setRoles(roles);
 		userService.save(user);
 		
-		return ResponseEntity.ok(new MessageResponse("Usuario modificado con éxito!"));
+		return ResponseEntity.ok(new MessageResponse("Contraseña modificado con éxito!"));
 		
 	}
 	
